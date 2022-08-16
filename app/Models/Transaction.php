@@ -4,23 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Enums\UserRoleEnum;
 
-class Product extends Model
+class Transaction extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'uuid',
-        'name',
-        'type',
-        'price',
-        'quantity',
-        'created_at',
-        'updated_at',
+        'user_id',
+        'product_id',
+        'amount',
+        'tax',
+        'admin_fee',
+        'total',
         'deleted_at'
     ];
 
@@ -47,9 +48,22 @@ class Product extends Model
         );
     }
 
-    public function transactions()
+    public function user()
     {
-        return $this->hasMany(Transaction::class);
+        return $this->belongsTo(User::class);
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function scopeFilterUserData($query)
+    {
+        if (auth()->user()->role == UserRoleEnum::CUSTOMER) {
+            return $query->where('user_id', auth()->user()->id);
+        }
+        return $query;
     }
 
     public function scopeLimitProduct($query, $limit_query_param)
@@ -67,7 +81,7 @@ class Product extends Model
         return $query->when(
                         $sortby_query_param, 
                         function($query, $sortby_query_param) {
-                            return $query->where('type', $sortby_query_param);
+                            return $query->where('product_id', $sortby_query_param);
                         }
                     );
     }

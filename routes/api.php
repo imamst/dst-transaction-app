@@ -4,7 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AuthController,
-    ProductController
+    ProductController,
+    TransactionController
 };
 
 /*
@@ -34,6 +35,15 @@ Route::prefix('v1')->group(function () {
                 Route::post('/{product:uuid}', [ProductController::class, 'update']);
                 Route::delete('/{product:uuid}', [ProductController::class, 'destroy']);
             });
+        });
+
+        Route::prefix('transactions')->group(function () {
+            Route::middleware(['customer'])->group(function () {
+                Route::post('/', [TransactionController::class, 'store']);
+            });
+
+            Route::get('/', [TransactionController::class, 'index']);
+            Route::get('/{transaction:uuid}', [TransactionController::class, 'show']);
         });
     });
 });
